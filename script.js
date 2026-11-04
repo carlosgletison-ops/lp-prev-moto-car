@@ -1,14 +1,114 @@
 /**
- * PREV MOTO CAR — INTERATIVIDADE & INTEGRAÇÃO DIRETA COM WHATSAPP (88) 99799-1122
- * - Máscara automática de WhatsApp nos formulários
- * - Filtro dinâmico da tabela de planos por cilindrada
- * - Clique em qualquer plano preenche automaticamente o formulário de cotação e rola suavemente
- * - Envio dos formulários formatado direto para o WhatsApp da Prev Moto Car
- * - Accordion do FAQ
+ * PREV MOTO CAR — INTERATIVIDADE, COTAÇÃO AUTOMÁTICA, PLANILHA & E-MAIL + WHATSAPP
+ *
+ * O que este script faz quando o cliente preenche o formulário:
+ * 1. Calcula automaticamente a mensalidade estimada (R$ 50 a R$ 135/mês) conforme modelo, cilindrada e ano.
+ * 2. Salva na Planilha Online (Google Sheets) e dispara o E-mail com a Tabelinha Atualizada (via Webhook Google Apps Script + FormSubmit).
+ * 3. Redireciona o cliente para o WhatsApp (88) 99799-1122 já com os dados e a pré-cotação pronta.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
   const WHATSAPP_NUMBER = '5588997991122';
+
+  // ============================================================================
+  // CONFIGURAÇÃO DE ARMAZENAMENTO (PLANILHA GOOGLE SHEETS + E-MAIL)
+  // ============================================================================
+  const INTEGRACAO_CONFIG = {
+    // 1. Cole aqui a URL do Google Apps Script (que salva na tabela do Google Sheets e envia o e-mail com a tabela atualizada):
+    googleSheetsWebhookUrl: '',
+
+    // 2. Ou informe o e-mail direto aqui para envio imediato em formato de tabela via FormSubmit (ex: 'contato@prevmotocar.com.br'):
+    emailDestinoDireto: '',
+  };
+
+  // ============================================================================
+  // MOTOR DE PRÉ-COTAÇÃO AUTOMÁTICA (BASEADO NA TABELA OFICIAL DA PREV MOTO CAR)
+  // ============================================================================
+  const calcularPreCotacao = (modelo, cilindrada, ano) => {
+    const mod = (modelo || '').toLowerCase();
+    const cc = (cilindrada || '').toLowerCase();
+    const anoNum = parseInt(ano, 10) || 2024;
+    const isNovo = anoNum >= 2024;
+
+    if (mod.includes('pop') || cc.includes('100cc') || cc.includes('110cc')) {
+      return 'R$ 50/mês';
+    }
+    if (mod.includes('sahara')) {
+      return 'R$ 135/mês';
+    }
+    if (mod.includes('300') || cc.includes('300cc')) {
+      return mod.includes('sahara') ? 'R$ 135/mês' : 'R$ 120 a R$ 135/mês';
+    }
+    if (mod.includes('190') || mod.includes('250') || mod.includes('xre') || mod.includes('cb') || cc.includes('190cc')) {
+      return isNovo ? 'R$ 120/mês' : 'R$ 100/mês';
+    }
+    if (mod.includes('bros') && (mod.includes('160') || cc.includes('160cc'))) {
+      return isNovo ? 'R$ 95/mês' : 'R$ 75/mês';
+    }
+    if (mod.includes('160') || cc.includes('160cc') || mod.includes('biz')) {
+      return isNovo ? 'R$ 85/mês' : 'R$ 75/mês';
+    }
+    if (mod.includes('bros') || mod.includes('xtz')) {
+      return 'R$ 70/mês';
+    }
+    if (mod.includes('125') || mod.includes('150') || cc.includes('125cc') || cc.includes('150cc')) {
+      return 'R$ 60/mês';
+    }
+    return 'A partir de R$ 50/mês';
+  };
+
+  // ============================================================================
+  // ENVIO EM SEGUNDO PLANO PARA PLANILHA GOOGLE SHEETS + E-MAIL COM TABELA
+  // ============================================================================
+  const registrarLeadNaBase = (lead) => {
+    // Salva também um histórico local de segurança no navegador
+    try {
+      const historico = JSON.parse(localStorage.getItem('prevmotocar_leads') || '[]');
+      historico.push(lead);
+      localStorage.setItem('prevmotocar_leads', JSON.stringify(historico));
+    } catch (_) {
+      // Ignora erro de storage privado
+    }
+
+    // A) Dispara para o Google Sheets + E-mail com Tabela Atualizada (Google Apps Script)
+    if (INTEGRACAO_CONFIG.googleSheetsWebhookUrl) {
+      fetch(INTEGRACAO_CONFIG.googleSheetsWebhookUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        keepalive: true,
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify(lead),
+      }).catch(() => {});
+    }
+
+    // B) Dispara para o E-mail Direto em Formato de Tabela (FormSubmit AJAX)
+    if (INTEGRACAO_CONFIG.emailDestinoDireto) {
+      fetch(`https://formsubmit.co/ajax/${encodeURIComponent(INTEGRACAO_CONFIG.emailDestinoDireto)}`, {
+        method: 'POST',
+        keepalive: true,
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          _subject: `Nova Cotação Prev Moto Car — ${lead.nome} (${lead.modelo})`,
+          _template: 'table',
+          _captcha: 'false',
+          'Data e Hora': lead.dataHora,
+          'Nome do Cliente': lead.nome,
+          WhatsApp: lead.whatsapp,
+          'Modelo da Moto': lead.modelo,
+          'Ano da Moto': lead.ano,
+          Cilindrada: lead.cilindrada,
+          Cidade: lead.cidade,
+          'Pré-Cotação Calculada': lead.preCotacao,
+          'Origem do Formulário': lead.origem,
+        }),
+      }).catch(() => {});
+    }
+  };
 
   // 1. MÁSCARA DE TELEFONE / WHATSAPP
   const phoneInputs = document.querySelectorAll('input[type="tel"]');
@@ -83,8 +183,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // 4. ENVIO DOS FORMULÁRIOS DIRETO PARA O WHATSAPP COM OS DADOS DA MOTO
-  const handleQuoteSubmit = (form) => {
+  // 4. ENVIO DOS FORMULÁRIOS -> SALVA NA TABELA / E-MAIL E ABRE WHATSAPP COM PRÉ-COTAÇÃO
+  const handleQuoteSubmit = (form, origemLabel) => {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
 
@@ -102,6 +202,26 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      const preCotacao = calcularPreCotacao(modelo, cilindrada, ano);
+      const dataHora = new Date().toLocaleString('pt-BR', {
+        timeZone: 'America/Fortaleza',
+      });
+
+      const leadData = {
+        dataHora,
+        nome,
+        whatsapp: whatsapp || 'Não informado',
+        modelo,
+        ano: ano || 'Não informado',
+        cilindrada: cilindrada || 'Não informada',
+        cidade: cidade || 'Não informada',
+        preCotacao,
+        origem: origemLabel,
+      };
+
+      // Dispara para a Planilha + E-mail em background sem travar o redirecionamento
+      registrarLeadNaBase(leadData);
+
       const mensagem = [
         `Olá! Vim pelo site da *Prev Moto Car* e quero receber minha cotação:`,
         ``,
@@ -111,6 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ano ? `*Ano:* ${ano}` : null,
         cilindrada ? `*Cilindrada:* ${cilindrada}` : null,
         cidade ? `*Cidade:* ${cidade}` : null,
+        `*Pré-cotação na tabela:* ${preCotacao}`,
       ]
         .filter(Boolean)
         .join('\n');
@@ -123,8 +244,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const formTopo = document.getElementById('form-cotacao-topo');
   const formRodape = document.getElementById('form-cotacao-rodape');
 
-  if (formTopo) handleQuoteSubmit(formTopo);
-  if (formRodape) handleQuoteSubmit(formRodape);
+  if (formTopo) handleQuoteSubmit(formTopo, 'Formulário Principal (Topo)');
+  if (formRodape) handleQuoteSubmit(formRodape, 'Formulário Final (Rodapé)');
 
   // 5. ACCORDION DE PERGUNTAS FREQUENTES (FAQ)
   const faqItems = document.querySelectorAll('.faq-item');
