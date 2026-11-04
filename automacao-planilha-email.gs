@@ -20,7 +20,7 @@
  * - Também possui a função `enviarResumoDiarioPorEmail()` caso queira agendar envio diário.
  */
 
-const EMAIL_DESTINO = "SEU_EMAIL_AQUI@gmail.com"; // <-- Troque pelo e-mail que vai receber a tabela (pode separar vários por vírgula)
+const EMAIL_DESTINO = "teraescritoriomarketing@gmail.com"; // <-- E-mail configurado para receber a tabela atualizada
 const NOME_ABA = "Cotações";
 
 function obterOuCriarAba() {
@@ -168,3 +168,4 @@ function enviarEmailComTabelaAtualizada(sheet, ultimoLead) {
     htmlBody: htmlBody
   });
 }
+

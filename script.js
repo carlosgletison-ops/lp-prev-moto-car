@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     googleSheetsWebhookUrl: '',
 
     // 2. Ou informe o e-mail direto aqui para envio imediato em formato de tabela via FormSubmit (ex: 'contato@prevmotocar.com.br'):
-    emailDestinoDireto: '',
+    emailDestinoDireto: 'teraescritoriomarketing@gmail.com',
   };
 
   // ============================================================================
