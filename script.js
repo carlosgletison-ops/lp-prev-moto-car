@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================================
   const INTEGRACAO_CONFIG = {
     // 1. Cole aqui a URL do Google Apps Script (que salva na tabela do Google Sheets e envia o e-mail com a tabela atualizada):
-    googleSheetsWebhookUrl: 'https://script.google.com/macros/s/AKfycbw_Oq5tYPZEFVZd6FTvyK5Q_KknTaJz2Co9l0WbfERCFjOyslmbyqt2Z8Gkl2YNlC67/exec',
+    googleSheetsWebhookUrl: 'https://script.google.com/macros/s/AKfycby2VauTwjvo11IjAlM_3rmc5kNdWY1tSqjtKoLh1q7umA7TNXtY08-cNJpnzTWo47k5Gg/exec',
 
     // Lista de e-mails que recebem a tabela atualizada (separados por vírgula):
     emailsDestino: 'teraescritoriomarketing@gmail.com, prevmotocarprotecaoveicular@gmail.com',
