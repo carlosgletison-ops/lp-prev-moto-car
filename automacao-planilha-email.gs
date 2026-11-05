@@ -22,9 +22,34 @@
 
 const EMAIL_DESTINO = "teraescritoriomarketing@gmail.com, prevmotocarprotecaoveicular@gmail.com"; // <-- E-mails configurados para receber a tabela atualizada
 const NOME_ABA = "Cotações";
+const SPREADSHEET_ID_OPCIONAL = ""; // Se o script não foi criado em Extensões -> Apps Script dentro da planilha, cole aqui o ID ou link da planilha
+
+function obterPlanilha() {
+  let ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (ss) return ss;
+
+  if (SPREADSHEET_ID_OPCIONAL) {
+    return SPREADSHEET_ID_OPCIONAL.indexOf("http") === 0
+      ? SpreadsheetApp.openByUrl(SPREADSHEET_ID_OPCIONAL)
+      : SpreadsheetApp.openById(SPREADSHEET_ID_OPCIONAL);
+  }
+
+  // Caso o script tenha sido criado avulso no script.google.com, cria e reutiliza automaticamente uma planilha na conta
+  const props = PropertiesService.getScriptProperties();
+  const savedId = props.getProperty("PLANILHA_LEADS_ID");
+  if (savedId) {
+    try {
+      return SpreadsheetApp.openById(savedId);
+    } catch (e) {}
+  }
+
+  ss = SpreadsheetApp.create("Leads Prev Moto Car");
+  props.setProperty("PLANILHA_LEADS_ID", ss.getId());
+  return ss;
+}
 
 function obterOuCriarAba() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = obterPlanilha();
   let sheet = ss.getSheetByName(NOME_ABA);
 
   if (!sheet) {
@@ -97,7 +122,7 @@ function doPost(e) {
 function enviarEmailComTabelaAtualizada(sheet, ultimoLead) {
   const todasLinhas = sheet.getDataRange().getValues();
   const totalLeads = todasLinhas.length - 1;
-  const urlPlanilha = SpreadsheetApp.getActiveSpreadsheet().getUrl();
+  const urlPlanilha = sheet.getParent().getUrl();
 
   // Pega os últimos 25 leads da tabela (do mais recente para o mais antigo)
   const linhasDados = todasLinhas.slice(1).reverse().slice(0, 25);
