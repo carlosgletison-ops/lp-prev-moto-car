@@ -17,8 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Cole aqui a URL do Google Apps Script (que salva na tabela do Google Sheets e envia o e-mail com a tabela atualizada):
     googleSheetsWebhookUrl: 'https://script.google.com/macros/s/AKfycbw_Oq5tYPZEFVZd6FTvyK5Q_KknTaJz2Co9l0WbfERCFjOyslmbyqt2Z8Gkl2YNlC67/exec',
 
-    // 2. Ou informe o e-mail direto aqui para envio imediato em formato de tabela via FormSubmit (ex: 'contato@prevmotocar.com.br'):
-    emailDestinoDireto: 'teraescritoriomarketing@gmail.com',
+    // 2. Backup opcional via FormSubmit (desativado pois o Google Apps Script acima já envia o e-mail com a tabela atualizada):
+    emailDestinoDireto: '',
   };
 
   // ============================================================================
