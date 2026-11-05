@@ -20,7 +20,7 @@
  * - Também possui a função `enviarResumoDiarioPorEmail()` caso queira agendar envio diário.
  */
 
-const EMAIL_DESTINO = "teraescritoriomarketing@gmail.com"; // <-- E-mail configurado para receber a tabela atualizada
+const EMAIL_DESTINO = "teraescritoriomarketing@gmail.com, prevmotocarprotecaoveicular@gmail.com"; // <-- E-mails configurados para receber a tabela atualizada
 const NOME_ABA = "Cotações";
 
 function obterOuCriarAba() {
@@ -162,8 +162,10 @@ function enviarEmailComTabelaAtualizada(sheet, ultimoLead) {
     </div>
   `;
 
+  const destinatarios = ultimoLead.emailsDestino || EMAIL_DESTINO;
+
   MailApp.sendEmail({
-    to: EMAIL_DESTINO,
+    to: destinatarios,
     subject: `[Prev Moto Car] Nova Cotação: ${ultimoLead.nome} - ${ultimoLead.modelo} (${ultimoLead.preCotacao})`,
     htmlBody: htmlBody
   });

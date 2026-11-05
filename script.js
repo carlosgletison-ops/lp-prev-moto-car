@@ -17,7 +17,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Cole aqui a URL do Google Apps Script (que salva na tabela do Google Sheets e envia o e-mail com a tabela atualizada):
     googleSheetsWebhookUrl: 'https://script.google.com/macros/s/AKfycbw_Oq5tYPZEFVZd6FTvyK5Q_KknTaJz2Co9l0WbfERCFjOyslmbyqt2Z8Gkl2YNlC67/exec',
 
-    // 2. Backup opcional via FormSubmit (desativado pois o Google Apps Script acima já envia o e-mail com a tabela atualizada):
+    // Lista de e-mails que recebem a tabela atualizada (separados por vírgula):
+    emailsDestino: 'teraescritoriomarketing@gmail.com, prevmotocarprotecaoveicular@gmail.com',
+
+    // 2. Backup opcional via FormSubmit:
     emailDestinoDireto: '',
   };
 
@@ -37,16 +40,16 @@ document.addEventListener('DOMContentLoaded', () => {
       return 'R$ 135/mês';
     }
     if (mod.includes('300') || cc.includes('300cc')) {
-      return mod.includes('sahara') ? 'R$ 135/mês' : 'R$ 120 a R$ 135/mês';
+      return mod.includes('sahara') ? 'R$ 135/mês' : 'R$ 125 a R$ 135/mês';
     }
     if (mod.includes('190') || mod.includes('250') || mod.includes('xre') || mod.includes('cb') || cc.includes('190cc')) {
-      return isNovo ? 'R$ 120/mês' : 'R$ 100/mês';
+      return isNovo ? 'R$ 125/mês' : 'R$ 100/mês';
     }
     if (mod.includes('bros') && (mod.includes('160') || cc.includes('160cc'))) {
       return isNovo ? 'R$ 95/mês' : 'R$ 75/mês';
     }
     if (mod.includes('160') || cc.includes('160cc') || mod.includes('biz')) {
-      return isNovo ? 'R$ 85/mês' : 'R$ 75/mês';
+      return isNovo ? 'R$ 85/mês' : 'R$ 65/mês';
     }
     if (mod.includes('bros') || mod.includes('xtz')) {
       return 'R$ 70/mês';
@@ -217,6 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cidade: cidade || 'Não informada',
         preCotacao,
         origem: origemLabel,
+        emailsDestino: INTEGRACAO_CONFIG.emailsDestino,
       };
 
       // Dispara para a Planilha + E-mail em background sem travar o redirecionamento
